@@ -1,0 +1,39 @@
+ODISHA CONSTRUCTION WORKER TOOL - SETUP ON A NEW LAPTOP
+=======================================================
+
+1. INSTALL PYTHON (only once per laptop)
+   - Download Python 3.11 or newer: https://www.python.org/downloads/windows/
+   - Run the installer. On the FIRST screen tick "Add python.exe to PATH",
+     then click "Install Now".
+
+2. UNZIP THE TOOL
+   - Right-click odisha-tool.zip > Extract All.
+   - Move the "odisha-tool" folder somewhere simple, e.g. C:\odisha-tool
+     (avoid OneDrive-synced folders such as Desktop or Documents).
+   - Keep the folder path SHORT. A deep folder makes the install fail with
+     "The filename or extension is too long".
+
+3. FIRST START (needs internet, about 5 minutes)
+   - Double-click run.bat inside the folder.
+   - It creates its own Python environment, installs the packages and
+     downloads Firefox for the automation. Later starts take a few seconds.
+
+4. GEMINI API KEY (for reading scanned documents)
+   - The first time you click "Read document", the tool asks for the key.
+   - Get a free key at https://aistudio.google.com/apikey
+     (sign in with Google > Create API key) and paste it in.
+   - It is saved in gemini_api_key.txt in the tool folder. Do not share that file.
+
+5. DAILY USE
+   - Double-click run.bat > Pay Annual Contribution > enter Registration Number
+     > Browse for the scan > check the fields > Continue.
+   - Firefox opens and fills the application. Check the confirmation popup,
+     then finish the payment yourself in Firefox.
+   - Every run is logged in logs\log.csv.
+
+TROUBLESHOOTING
+   - "Python was not found": run the Python installer again > Modify >
+     tick "Add Python to environment variables".
+   - Window closes immediately: open Command Prompt in the folder, type
+     run.bat and press Enter to see the error.
+   - Firefox does not open: delete the "venv" folder and run run.bat again.
