@@ -16,7 +16,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 from rapidfuzz import fuzz
 
-from automation import (BASE_DIR, Cancelled, _parse_date, _real_options, choose, choose_fuzzy, launch_browser, save_debug,
+from automation import (BASE_DIR, Cancelled, _parse_date, _real_options, choose, choose_fuzzy, launch_browser, open_url, save_debug,
                         selected_text, settle, wait_for_close_or_refill)
 from docprep import prepare_upload
 from registration import RegistrationRun, _Missing, _ask_until
@@ -584,7 +584,7 @@ class EmploymentRun(RegistrationRun):
     def open_registration(self):
         page = self.page
         self.ui.status("Opening JobSeeker Registration...")
-        page.goto(self.cfg["entry_url"], wait_until="domcontentloaded")
+        open_url(page, self.cfg["entry_url"])
         page.get_by_text(self.cfg["registration_link"], exact=True).first.click()
         settle(page, 5000)
 

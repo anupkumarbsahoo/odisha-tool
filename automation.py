@@ -208,6 +208,9 @@ def launch_browser(p, config, ui):
             slow_mo=config.get("slow_mo_ms", 0),
             no_viewport=True,
             accept_downloads=True,
+            # Some govt servers (e.g. empmission.odisha.gov.in) do not send their intermediate certificate;
+            # let Firefox use the certificates Windows already has. Certificates are still fully checked.
+            firefox_user_prefs={"security.enterprise_roots.enabled": True},
         )
     except Exception as exc:
         raise RuntimeError("Firefox could not start. Close any Firefox window opened by this tool and try "
@@ -217,6 +220,18 @@ def launch_browser(p, config, ui):
     for pg in context.pages:
         pg.on("download", lambda d: save_download(d, ui))
     return context
+
+
+def open_url(page, url, attempts=3):
+    """page.goto that retries SEC_ERROR_UNKNOWN_ISSUER: right after start-up Firefox may not yet have loaded
+    the intermediate certificates needed for sites that do not send their full certificate chain."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return page.goto(url, wait_until="domcontentloaded")
+        except Exception as exc:
+            if "SEC_ERROR_UNKNOWN_ISSUER" not in str(exc) or attempt == attempts:
+                raise
+            time.sleep(3 * attempt)
 
 
 def save_download(download, ui):
@@ -424,7 +439,7 @@ def run_annual_contribution(config, session, ui):
         run = AnnualRun(config, session, ui, page, result)
         try:
             ui.status("Opening construction worker login page...")
-            page.goto(config["login_url"], wait_until="domcontentloaded")
+            open_url(page, config["login_url"])
 
             run.check_stop()
             ui.status("Clicking Pay Annual Contribution...")

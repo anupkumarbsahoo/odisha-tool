@@ -13,7 +13,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from automation import (BASE_DIR, Cancelled, _same, _transform, choose, choose_fuzzy, launch_browser,
+from automation import (BASE_DIR, Cancelled, _same, _transform, choose, choose_fuzzy, launch_browser, open_url,
                         save_debug, selected_text, settle, wait_for_close_or_refill)
 from docprep import prepare_upload
 
@@ -475,7 +475,7 @@ def run_registration(config, session, ui):
         context.on("dialog", on_dialog)
         run = RegistrationRun(config, session, ui, page, result["site_messages"])
         try:
-            page.goto(config["login_url"], wait_until="domcontentloaded")
+            open_url(page, config["login_url"])
             if not session.username:
                 run.one_time_registration()
             result["username"] = session.username
