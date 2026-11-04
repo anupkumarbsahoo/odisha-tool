@@ -41,8 +41,14 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Odisha Construction Worker Tool")
-        self.geometry("1250x800")
-        self.minsize(900, 600)
+        # fit the screen (e.g. 1366x768 laptops) so the bottom buttons are never under the taskbar
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.geometry(f"{min(1250, sw - 40)}x{min(800, sh - 80)}+10+10")
+        self.minsize(min(900, sw - 40), min(600, sh - 80))
+        try:
+            self.state("zoomed")
+        except tk.TclError:
+            pass
         self.session = Session()
         style = ttk.Style(self)
         style.configure("Title.TLabel", font=("Segoe UI", 18, "bold"))
@@ -61,6 +67,8 @@ class App(tk.Tk):
         """While Firefox works, shrink to a small status panel in the bottom-right corner that stays
         on top of Firefox, so its log and buttons are always visible."""
         if on:
+            self._was_zoomed = self.state() == "zoomed"
+            self.state("normal")
             self._full_geometry = self.geometry()
             self.minsize(400, 250)
             w, h = 560, 330
@@ -69,8 +77,11 @@ class App(tk.Tk):
             self.attributes("-topmost", True)
         elif getattr(self, "_full_geometry", None):
             self.attributes("-topmost", False)
-            self.minsize(900, 600)
+            sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+            self.minsize(min(900, sw - 40), min(600, sh - 80))
             self.geometry(self._full_geometry)
+            if getattr(self, "_was_zoomed", False):
+                self.state("zoomed")
             self.container.config(padding=20)
             self._full_geometry = None
 
@@ -177,7 +188,8 @@ class DocumentScreen(ttk.Frame):
             self.vars[key] = var
 
         buttons = ttk.Frame(self)
-        buttons.pack(fill="x")
+        # packed before the body so it keeps its space when the window is short
+        buttons.pack(side="bottom", fill="x", before=body)
         ttk.Button(buttons, text="Back", command=lambda: app.show(RegistrationScreen)).pack(side="left")
         self.continue_btn = ttk.Button(buttons, text="Continue", command=self.next)
         self.continue_btn.pack(side="right")

@@ -181,12 +181,14 @@ class EmpDocsScreen(ttk.Frame):
         self.vars["caste"].trace_add("write", lambda *a: self.update_sub_castes())
         self.update_sub_castes()
 
-        ttk.Label(self, text="Tip: click a file name to open it. Fields read from documents can be corrected before "
-                             "continuing. Put each qualification (10th, 12th, graduation...) in its own Highest Degree "
-                             "row - the tool enters them lowest first.",
-                  foreground="#555").pack(anchor="w", pady=(8, 0))
+        tip = ttk.Label(self, text="Tip: click a file name to open it. Fields read from documents can be corrected "
+                                   "before continuing. Put each qualification (10th, 12th, graduation...) in its own "
+                                   "Highest Degree row - the tool enters them lowest first.",
+                        foreground="#555")
+        tip.pack(side="bottom", anchor="w", pady=(8, 0), before=body)
         buttons = ttk.Frame(self)
-        buttons.pack(fill="x", pady=(10, 0))
+        # packed before the body so it keeps its space when the window is short
+        buttons.pack(side="bottom", fill="x", pady=(10, 0), before=tip)
         ttk.Button(buttons, text="Back", command=app.go_home).pack(side="left")
         self.continue_btn = ttk.Button(buttons, text="Continue", command=self.next)
         self.continue_btn.pack(side="right")

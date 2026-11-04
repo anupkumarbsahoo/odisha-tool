@@ -28,7 +28,7 @@
   "details_form": [
     {"field": "name", "selector": "#workerFullName"},
     {"field": "guardian_name", "selector": "#fathersName"},
-    {"select_if_empty": "KENDUJHAR", "selector": "#block", "label": "Present Block"},
+    {"fuzzy_select": "block", "fallback": "KENDUJHAR", "replace": true, "selector": "#block", "label": "Present Block"},
     {"field": "employer_name", "selector": "#estName"},
     {"field": "employer_name", "selector": "#estContactPerson", "label": "Contact Person"},
     {"field": "employer_contact", "selector": "#estContactNO", "transform": "digits"},
