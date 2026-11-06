@@ -156,6 +156,27 @@ class WaitNotice(tk.Toplevel):
         self.attributes("-topmost", True)
 
 
+class PrimaryButton(tk.Button):
+    """Main action button (Continue): blue with white text when it can be clicked, grey while disabled
+    (e.g. while documents are being read). ttk buttons ignore colours on Windows, so this is a plain tk.Button."""
+
+    ENABLED = {"bg": "#1a5fb4", "fg": "white", "activebackground": "#134a8e", "activeforeground": "white",
+               "cursor": "hand2"}
+    DISABLED = {"bg": "#d0d0d0", "disabledforeground": "#7a7a7a", "cursor": "arrow"}
+
+    def __init__(self, parent, **kw):
+        kw.setdefault("font", ("Segoe UI", 10, "bold"))
+        super().__init__(parent, relief="flat", bd=0, padx=22, pady=5, highlightthickness=0, **kw)
+        self.configure(state=kw.get("state", "normal"))
+
+    def configure(self, cnf=None, **kw):
+        if "state" in kw:
+            kw.update(self.DISABLED if str(kw["state"]) == "disabled" else self.ENABLED)
+        return super().configure(cnf, **kw)
+
+    config = configure
+
+
 class RunButtons:
     """"Stop run" (always available) and "Fill remaining fields" (whenever the tool is not filling)."""
 

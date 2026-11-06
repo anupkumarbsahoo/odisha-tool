@@ -13,7 +13,7 @@ from PIL import Image, ImageTk
 
 from extractors import FIELDS, MissingApiKey, run_extractor
 from runlog import log_run
-from ui_common import BASE_DIR, RunButtons, UIBridge, ask_api_key, load_config, reader_note
+from ui_common import PrimaryButton, BASE_DIR, RunButtons, UIBridge, ask_api_key, load_config, reader_note
 
 SESSIONS_DIR = BASE_DIR / "sessions"
 IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"}
@@ -191,7 +191,7 @@ class DocumentScreen(ttk.Frame):
         # packed before the body so it keeps its space when the window is short
         buttons.pack(side="bottom", fill="x", before=body)
         ttk.Button(buttons, text="Back", command=lambda: app.show(RegistrationScreen)).pack(side="left")
-        self.continue_btn = ttk.Button(buttons, text="Continue", command=self.next)
+        self.continue_btn = PrimaryButton(buttons, text="Continue", command=self.next)
         self.continue_btn.pack(side="right")
 
         if session.document_path:

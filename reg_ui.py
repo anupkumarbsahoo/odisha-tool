@@ -10,7 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from extractors import MissingApiKey, run_extractor
 from runlog import log_run
-from ui_common import RunButtons, UIBridge, ask_api_key, load_config, reader_note
+from ui_common import PrimaryButton, RunButtons, UIBridge, ask_api_key, load_config, reader_note
 
 # document key -> (label, extractor kind or None, required)
 DOCUMENTS = {
@@ -214,7 +214,7 @@ class RegDocsScreen(ttk.Frame):
         # packed before the body so it keeps its space when the window is short
         buttons.pack(side="bottom", fill="x", pady=(10, 0), before=tip)
         ttk.Button(buttons, text="Back", command=app.go_home).pack(side="left")
-        self.continue_btn = ttk.Button(buttons, text="Continue", command=self.next)
+        self.continue_btn = PrimaryButton(buttons, text="Continue", command=self.next)
         self.continue_btn.pack(side="right")
         self.pending = 0
 
