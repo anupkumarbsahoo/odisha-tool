@@ -13,7 +13,7 @@ from PIL import Image, ImageTk
 
 from extractors import FIELDS, MissingApiKey, run_extractor
 from runlog import log_run
-from ui_common import BASE_DIR, RunButtons, UIBridge, ask_api_key, load_config
+from ui_common import BASE_DIR, RunButtons, UIBridge, ask_api_key, load_config, reader_note
 
 SESSIONS_DIR = BASE_DIR / "sessions"
 IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"}
@@ -237,18 +237,19 @@ class DocumentScreen(ttk.Frame):
         self.set_busy(False, "")
         error = outcome.get("error")
         if isinstance(error, MissingApiKey):
-            if ask_api_key(self, error.key_file):
+            if ask_api_key(self, error):
                 self.read_document()
             return
         if error:
             messagebox.showerror("Could not read document", str(error), parent=self)
             return
+        note = reader_note(outcome["fields"])
         found = 0
         for key, value in outcome["fields"].items():
             if value and key in self.vars:
                 self.vars[key].set(value)
                 found += 1
-        self.status.config(text=f"Read {found} of {len(FIELDS)} fields - please check them")
+        self.status.config(text=f"Read {found} of {len(FIELDS)} fields - please check them{note}")
 
     def set_busy(self, busy, message):
         state = "disabled" if busy else "normal"

@@ -10,7 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from extractors import MissingApiKey, run_extractor
 from runlog import log_run
-from ui_common import RunButtons, UIBridge, ask_api_key, load_config
+from ui_common import RunButtons, UIBridge, ask_api_key, load_config, reader_note
 
 # document key -> (label, extractor kind or None, required)
 DOCUMENTS = {
@@ -259,13 +259,14 @@ class RegDocsScreen(ttk.Frame):
         error = outcome.get("error")
         if isinstance(error, MissingApiKey):
             self.doc_status[key].config(text="")
-            if ask_api_key(self, error.key_file):
+            if ask_api_key(self, error):
                 self.read(key, kind, path)
             return
         if error:
             self.doc_status[key].config(text="Not read")
             messagebox.showerror("Could not read document", f"{DOCUMENTS[key][0]}:\n\n{error}", parent=self)
             return
+        note = " (Groq)" if reader_note(outcome["data"]) else ""
         current = {k: v.get().strip() for k, v in self.vars.items()}
         values = map_extracted(key, outcome["data"], current)
         for field_key, value in values.items():
@@ -273,7 +274,7 @@ class RegDocsScreen(ttk.Frame):
         if key == "nom_aadhaar" and not self.vars["spouse_name"].get().strip() \
                 and self.vars["nom_relationship"].get() in ("Husband", "Wife"):
             self.vars["spouse_name"].set(self.vars["nom_name"].get())
-        self.doc_status[key].config(text=f"Read {len(values)} fields")
+        self.doc_status[key].config(text=f"Read {len(values)} fields{note}")
 
     def open_doc(self, key):
         if key in self.session.docs:

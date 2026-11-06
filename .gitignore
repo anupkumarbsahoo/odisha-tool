@@ -1,5 +1,6 @@
 # Secrets - never upload
 gemini_api_key.txt
+groq_api_key.txt
 
 # Workers' personal data (Aadhaar, bank details, scans, page copies) - never upload
 recording/

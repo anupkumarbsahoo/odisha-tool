@@ -111,11 +111,12 @@ DOC_FIELDS = {"job_card": {**FIELDS, **JOB_CARD_EXTRA}, "aadhaar": AADHAAR_FIELD
 
 
 class MissingApiKey(Exception):
-    """Raised by an extractor that needs an API key; key_file is where the UI should save it."""
+    """Raised by an extractor that needs an API key; key_file is where the UI should save it,
+    url where to get one, reason why it is needed now (e.g. Gemini failed, so the Groq backup is needed)."""
 
-    def __init__(self, key_file):
-        super().__init__(f"No API key found in {key_file}")
-        self.key_file = key_file
+    def __init__(self, key_file, service="Gemini", url="https://aistudio.google.com/apikey", reason=""):
+        super().__init__(f"No {service} API key found in {key_file}")
+        self.key_file, self.service, self.url, self.reason = key_file, service, url, reason
 
 
 def load_extractor(module_name):
@@ -128,4 +129,7 @@ def load_extractor(module_name):
 def run_extractor(module_name, path, kind="job_card"):
     """``path`` may also be a list of files that together make one document (certificate + marksheet)."""
     raw = load_extractor(module_name).extract(path, kind) or {}
-    return {key: str(raw.get(key) or "").strip() for key in DOC_FIELDS[kind]}
+    values = {key: str(raw.get(key) or "").strip() for key in DOC_FIELDS[kind]}
+    if raw.get("_reader"):
+        values["_reader"] = raw["_reader"]   # which service read it, e.g. "Groq" when Gemini failed
+    return values

@@ -12,7 +12,7 @@ from rapidfuzz import fuzz, process, utils
 
 from extractors import MissingApiKey, run_extractor
 from runlog import log_run
-from ui_common import RunButtons, UIBridge, ask_api_key, load_config
+from ui_common import RunButtons, UIBridge, ask_api_key, load_config, reader_note
 
 # document key -> (label, extractor kind or None, required)
 DOCUMENTS = {
@@ -110,7 +110,7 @@ class EmpDocsScreen(ttk.Frame):
                 file_label.grid(row=row, column=col + 1, sticky="w")
                 file_label.bind("<Button-1>", lambda e, k=key: self.open_doc(k))
                 self.doc_labels[key] = file_label
-            status = ttk.Label(docs, text="", foreground="#1a5fb4", width=13)
+            status = ttk.Label(docs, text="", foreground="#1a5fb4", width=19)
             status.grid(row=row, column=5, sticky="w")
             for key in keys:
                 self.doc_status[key] = status
@@ -279,18 +279,19 @@ class EmpDocsScreen(ttk.Frame):
         error = outcome.get("error")
         if isinstance(error, MissingApiKey):
             self.doc_status[key].config(text="")
-            if ask_api_key(self, error.key_file):
+            if ask_api_key(self, error):
                 self.read(key, kind, path, qual_tab)
             return
         if error:
             self.doc_status[key].config(text="Not read")
             messagebox.showerror("Could not read document", f"{DOCUMENTS[key][0]}:\n\n{error}", parent=self)
             return
+        note = " (Groq)" if reader_note(outcome["data"]) else ""
         values = self.map_card(outcome["data"]) if kind == "emp_card" else self.map_qual(outcome["data"], qual_tab)
         for field_key, value in values.items():
             if value and field_key in self.vars:
                 self.vars[field_key].set(value)
-        self.doc_status[key].config(text=f"Read {sum(1 for v in values.values() if v)} fields")
+        self.doc_status[key].config(text=f"Read {sum(1 for v in values.values() if v)} fields{note}")
         self.update_highest()
 
     def map_card(self, data):

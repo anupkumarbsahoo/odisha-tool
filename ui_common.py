@@ -18,17 +18,25 @@ def load_config():
         return json.load(f)
 
 
-def ask_api_key(parent, key_file):
+def ask_api_key(parent, error):
+    """Ask for the key an extractor reported missing (extractors.MissingApiKey) and save it."""
+    how = {"Gemini": "sign in with a Google account, click 'Create API key'",
+           "Groq": "sign up free, then click 'Create API Key'"}.get(error.service, "create a key")
     key = simpledialog.askstring(
-        "Gemini API key",
-        "Paste your free Gemini API key.\n"
-        "Get one at https://aistudio.google.com/apikey (sign in with a Google account, "
-        "click 'Create API key').\n\nIt is saved in " + Path(key_file).name + " on this PC.",
+        f"{error.service} API key",
+        (error.reason + "\n\n" if error.reason else "") +
+        f"Paste your free {error.service} API key.\n"
+        f"Get one at {error.url} ({how}).\n\nIt is saved in {Path(error.key_file).name} on this PC.",
         parent=parent)
     if not key or not key.strip():
         return False
-    Path(key_file).write_text(key.strip(), encoding="utf-8")
+    Path(error.key_file).write_text(key.strip(), encoding="utf-8")
     return True
+
+
+def reader_note(data):
+    """Removes the extractor's "_reader" from the values; a note for the status when the backup read it."""
+    return " - read by Groq, check carefully" if data.pop("_reader", "") == "Groq" else ""
 
 
 class TextPrompt(tk.Toplevel):

@@ -11,7 +11,10 @@
   "field_timeout_ms": 5000,
   "village_match_threshold": 80,
   "date_format": "%Y-%m-%d",
-  "extractor": "extractors.gemini",
+  "extractor": "extractors.auto",
+  "_extractor_readme": "extractors.auto = Gemini first, then Groq (free backup, key in groq_api_key.txt) when Gemini fails. extractors.gemini or extractors.groq = only that one.",
+  "groq_models": ["qwen/qwen3.8-27b"],
+  "groq_max_images": 3,
   "gemini_models": ["gemini-flash-latest", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-2.5-flash"],
 
   "selectors": {
