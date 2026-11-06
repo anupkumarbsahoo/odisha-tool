@@ -486,6 +486,7 @@ class EmploymentRun(RegistrationRun):
             self.run_steps(self.pages["qualification"])
             self.qual["exam_chosen"] = selected_text(self.page, self.locate(
                 {"label": "Exam passed", "after": "Educational Qualification(Enter"}, "select")) or qual.get("exam", "")
+            self.check_grade_division()
             self.add_subjects()
             self.check_stop()
             add = self.page.locator(buttons["add_qualification"]).filter(visible=True)
@@ -504,6 +505,42 @@ class EmploymentRun(RegistrationRun):
         if self.detect() == "qualification":
             if not self.press_next("qualification", buttons["qualification_submit"]):
                 self.wait_until_moved("qualification", "All qualifications are added; the site did not move on.")
+
+    def check_grade_division(self):
+        """Some qualifications need a Grade, others a Division: the user checks both in Firefox,
+        corrects or fills them if needed, then continues (or skips)."""
+        after = "Educational Qualification(Enter"
+        shown = []
+        for label in ("Division", "Grade"):
+            loc = self.mark(label, "select", after)
+            value = selected_text(self.page, loc) if loc is not None else ""
+            shown.append(f"{label}: {value or '(not selected)'}")
+        exam = self.qual.get("exam_chosen") or self.qual.get("exam") or self.qual.get("level")
+        self.ui.status(f"Waiting for you to check Grade and Division for {exam}...")
+        self.ui.start_wait(f"Check Grade and Division - {exam}",
+                           f"Qualification: {exam}\nNow in Firefox:\n  " + "\n  ".join(shown)
+                           + "\n\nSome qualifications need a Grade, others a Division. Please check them in "
+                             "Firefox and fill or correct them if needed, then press 'Checked - continue'. "
+                             "Press 'Skip' to leave them as they are.",
+                           [("Checked - continue", "done"), ("Skip", "skip"), ("Stop the run", "stop")])
+        try:
+            while True:
+                choice = "stop" if self.ui.stop_requested() else self.ui.wait_choice()
+                if choice == "stop":
+                    raise Cancelled()
+                if choice in ("done", "skip"):
+                    break
+                self.page.wait_for_timeout(500)
+        finally:
+            self.ui.end_wait()
+        final = []
+        for label in ("Division", "Grade"):
+            loc = self.mark(label, "select", after)
+            value = selected_text(self.page, loc) if loc is not None else ""
+            if value:
+                final.append(f"{label}: {value}")
+        self.ui.status(f"{exam}: " + (", ".join(final) or "no Grade / Division") + " - continuing.")
+        settle(self.page, 2000)
 
     def wait_for_added(self, before):
         self.ui.start_wait("Please add the qualification",

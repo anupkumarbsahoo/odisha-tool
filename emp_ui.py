@@ -323,11 +323,14 @@ class EmpDocsScreen(ttk.Frame):
         return out
 
     def update_highest(self):
-        """Suggest the highest qualification read for the Select Exchange page, unless chosen already."""
+        """Set Qualification (Select Exchange page) from the last filled degree row - documents are added
+        lowest first, so the last one is the highest. A value the user picked by hand is kept."""
         levels = [self.vars[f"{tab}.level"].get() for tab in QUAL_TABS]
         levels = [lv for lv in levels if lv in LEVELS]
-        if levels and not self.vars["qualification"].get():
-            self.vars["qualification"].set(max(levels, key=LEVELS.index))
+        current = self.vars["qualification"].get()
+        if levels and (not current or current == getattr(self, "auto_qualification", None)):
+            self.vars["qualification"].set(levels[-1])
+            self.auto_qualification = levels[-1]
 
     def open_doc(self, key):
         if key in self.session.docs:

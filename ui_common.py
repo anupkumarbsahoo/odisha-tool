@@ -136,7 +136,7 @@ class ChoicePrompt(tk.Toplevel):
 class WaitNotice(tk.Toplevel):
     """Non-blocking notice: the user works in Firefox while the tool watches the field."""
 
-    def __init__(self, root, title, message, on_choice):
+    def __init__(self, root, title, message, on_choice, choices=None):
         super().__init__(root)
         self.title(title)
         self.resizable(False, False)
@@ -145,8 +145,9 @@ class WaitNotice(tk.Toplevel):
         ttk.Label(frame, text=message, wraplength=380, justify="left").pack(anchor="w")
         buttons = ttk.Frame(frame)
         buttons.pack(pady=(12, 0))
-        ttk.Button(buttons, text="Skip this field", command=lambda: on_choice("skip")).pack(side="left", padx=6)
-        ttk.Button(buttons, text="Stop the run", command=lambda: on_choice("stop")).pack(side="left", padx=6)
+        # choices: (button text, value) pairs; "skip" and "stop" by default
+        for text, value in choices or [("Skip this field", "skip"), ("Stop the run", "stop")]:
+            ttk.Button(buttons, text=text, command=lambda v=value: on_choice(v)).pack(side="left", padx=6)
         self.protocol("WM_DELETE_WINDOW", lambda: on_choice("skip"))
         self.update_idletasks()
         x = self.winfo_screenwidth() - self.winfo_reqwidth() - 20
@@ -232,16 +233,16 @@ class UIBridge:
     def show_username(self, username, text=None):
         self._call(lambda: UsernamePopup(self.root, username, *([text] if text else [])))
 
-    def start_wait(self, title, msg):
+    def start_wait(self, title, msg, choices=None):
         self._wait_choice = None
 
         def choose(value):
             self._wait_choice = value
 
-        self._notice = self._call(lambda: WaitNotice(self.root, title, msg, choose))
+        self._notice = self._call(lambda: WaitNotice(self.root, title, msg, choose, choices))
 
     def wait_choice(self):
-        """None while waiting, "skip" or "stop" once the user presses a button."""
+        """None while waiting, else the value of the button pressed ("skip", "stop", ...)."""
         return getattr(self, "_wait_choice", None)
 
     def end_wait(self):
