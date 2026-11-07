@@ -31,6 +31,21 @@ def names_ratio(wanted, option, **kwargs):
 
 
 SCORERS = {"partial": fuzz.partial_ratio, "token": fuzz.token_set_ratio, "names": names_ratio}
+
+# The portal rejects text boxes containing any of these ("Invalid Characters entered !#$%^&*(){}[]|?><~`+").
+_INVALID_CHARS = re.compile(r"[!#$%^*(){}\[\]|?><~`+]")
+
+
+def site_text(value):
+    """Make document text acceptable to the portal: '&' -> 'AND', other rejected characters -> space."""
+    value = re.sub(r"\s*&\s*", " AND ", value)
+    value = _INVALID_CHARS.sub(" ", value)
+    value = re.sub(r"\s+", " ", value)
+    return re.sub(r"\s+([,.])", r"\1", value).strip(" ,")
+
+
+def has_invalid_chars(value):
+    return "&" in value or bool(_INVALID_CHARS.search(value))
 LEVEL_ORDER = ["10TH PASS", "12TH PASS", "ITI CERTIFICATE HOLDER", "DIPLOMA HOLDER", "GRADUATE",
                "GRADUATE(TECH.)", "HONOURS GRADUATE", "POST GRADUATE", "DOCTORATE"]
 
@@ -203,6 +218,28 @@ class EmploymentRun(RegistrationRun):
         return str(self.fields.get(key, "") or "")
 
     # --- step handlers ------------------------------------------------------
+    def fill(self, step):
+        """Text boxes: strip characters the portal rejects (e.g. '&' in 'SC&COMM' -> 'SC AND COMM'),
+        and fix a box an earlier run already filled with such characters."""
+        loc = self.locate(step, "input")
+        current = loc.input_value()
+        if current.strip() and has_invalid_chars(current):
+            fixed = site_text(current)
+            loc.fill(fixed)
+            loc.dispatch_event("change")
+            self.summary.append(f"{self.name(step)}: {fixed}  (removed characters the site does not accept)")
+            return
+        if step.get("transform") not in ("digits", "date"):
+            key = step["key"]
+            raw = self.value(step)
+            if raw and has_invalid_chars(raw):
+                cleaned = site_text(raw)
+                if key.startswith("q."):
+                    self.qual[key[2:]] = cleaned
+                elif not key.startswith("="):
+                    self.fields[key] = cleaned
+        super().fill(step)
+
     def select(self, step):
         """Like the registration select, but 'replace' re-selects a pre-chosen default (Gender is
         "Male", Marital Status "UNMARRIED" ... until changed)."""
