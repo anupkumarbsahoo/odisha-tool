@@ -221,6 +221,8 @@
     "castes": ["GENERAL", "OBC", "OBC AND SEBC", "SCHEDULE CASTE", "SCHEDULE TRIBE", "SEBC"],
     "genders": ["MALE", "FEMALE", "TRANSGENDER"],
     "marital_statuses": ["UNMARRIED", "MARRIED", "DIVORCEE", "SEPARATED/DESERTED-WOMAN", "WIDOW", "WIDOWER", "ANY"],
+    "_state_exchange_readme": "Checked on the portal: for these qualification levels the Exchange list is the district's District Employment Exchange plus this state exchange (no sub-offices).",
+    "state_exchange": {"name": "State Employment Exchange, Bhubaneswar", "levels": ["GRADUATE(TECH.)", "POST GRADUATE", "DOCTORATE"]},
     "exchanges": {
       "ANGUL": ["Special Employment Exchange, Talcher", "District Employment Exchange, Angul"],
       "BALANGIR": ["District Employment Exchange, Balangir"],

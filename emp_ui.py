@@ -143,6 +143,7 @@ class EmpDocsScreen(ttk.Frame):
                 widget.config(state="normal")   # type it when the site's list is not known yet
                 self.sub_caste_box = widget
         self.vars["district"].trace_add("write", lambda *a: self.update_exchanges())
+        self.vars["qualification"].trace_add("write", lambda *a: self.update_exchanges())
         self.update_exchanges()
 
         tabs = ttk.Notebook(body)
@@ -205,6 +206,12 @@ class EmpDocsScreen(ttk.Frame):
     def update_exchanges(self):
         district = self.vars["district"].get().strip().upper()
         values = self.cfg["exchanges"].get(district, [])
+        # Like the portal: for higher qualifications (B.Tech, PG, PhD) it offers the district's
+        # District Employment Exchange plus the State Employment Exchange, and no sub-offices.
+        state = self.cfg.get("state_exchange", {})
+        if values and self.vars["qualification"].get().strip().upper() in state.get("levels", []):
+            values = [v for v in values if v.lower().startswith("district")] or values
+            values = values + [state["name"]]
         self.exchange_box.config(values=values)
         if self.vars["exchange"].get() not in values:
             self.vars["exchange"].set(values[0] if values else "")
