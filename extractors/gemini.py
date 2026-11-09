@@ -41,7 +41,8 @@ Read the handwriting carefully and return the values below. Use "" for anything 
 - gp_municipality: after "G.P/NAC/Municipality"
 - block: after "Block"
 - district: after "Dist"
-- pin: 6-digit PIN code (may appear in the employer column as "PIN-")
+- pin: the 6-digit PIN code. It is often written only in the employer column as "PIN-" (e.g. "PIN- 758046");
+  then use that one. Return all 6 digits.
 - nature_of_job: after "Nature of Job"
 - employer_name: the employer's name in the "Name, Address of the Employer" column (may continue on the next row)
 - employer_contact: the "Contact/Mob No" column, digits only

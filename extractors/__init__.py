@@ -126,10 +126,27 @@ def load_extractor(module_name):
     return module
 
 
+def _six_digits(value):
+    digits = "".join(c for c in value if c.isdigit())
+    return digits if len(digits) == 6 else ""
+
+
+def _share_pin(values):
+    """The job card usually has the PIN only in the employer column ("PIN- 758046"), so the reader may return it
+    as est_pin and leave the worker's pin blank (or the other way round): fill the blank one from the other."""
+    pin, est_pin = _six_digits(values.get("pin", "")), _six_digits(values.get("est_pin", ""))
+    if not pin and est_pin:
+        values["pin"] = est_pin
+    if not est_pin and pin:
+        values["est_pin"] = pin
+
+
 def run_extractor(module_name, path, kind="job_card"):
     """``path`` may also be a list of files that together make one document (certificate + marksheet)."""
     raw = load_extractor(module_name).extract(path, kind) or {}
     values = {key: str(raw.get(key) or "").strip() for key in DOC_FIELDS[kind]}
+    if kind == "job_card":
+        _share_pin(values)
     if raw.get("_reader"):
         values["_reader"] = raw["_reader"]   # which service read it, e.g. "Groq" when Gemini failed
     return values
