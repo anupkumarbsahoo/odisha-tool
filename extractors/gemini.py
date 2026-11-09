@@ -23,6 +23,9 @@ API_ROOT = "https://generativelanguage.googleapis.com/v1beta"
 DEFAULT_MODEL = "gemini-flash-latest"
 RETRIES_PER_MODEL = 1
 RETRY_DELAY_S = 3
+# Good reads take 3-40 s. A model that has not answered by then is usually stuck (seen with handwritten
+# job cards: no reply for 2-4 minutes), so give up on it and try the next model, without a retry.
+CALL_TIMEOUT_S = 60
 MIME_TYPES = {".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png", ".webp": "image/webp"}
 
@@ -52,7 +55,17 @@ From the employer's address lines in the "Name, Address of the Employer" column 
 - est_block: the block after "BLOCK"
 - est_district: the district after "DIST"
 - est_pin: the 6-digit PIN after "PIN"
-Write names and places in CAPITAL letters exactly as written."""
+Write names and places in CAPITAL letters exactly as written.
+
+Spelling of places: in this handwriting a capital G often looks like a C (GHATGAON, not CHATGAON). For block,
+police_station, district, est_block and est_district, when the handwriting is close to one of these real names,
+use that exact spelling:
+- Blocks of Kendujhar district: ANANDAPUR, BANSPAL, CHAMPUA, GHASIPURA, GHATGAON, HARICHANDANPUR, HATADIHI,
+  JHUMPURA, JODA, KENDUJHAR, PATNA, SAHARPADA, TELKOI (police stations are often named after the block)
+- Districts of Odisha: ANUGUL, BALANGIR, BALESHWAR, BARGARH, BHADRAK, BOUDH, CUTTACK, DEOGARH, DHENKANAL,
+  GAJAPATI, GANJAM, JAGATSINGHAPUR, JAJAPUR, JHARSUGUDA, KALAHANDI, KANDHAMAL, KENDRAPARA, KENDUJHAR, KHORDHA,
+  KORAPUT, MALKANGIRI, MAYURBHANJ, NABARANGPUR, NAYAGARH, NUAPADA, PURI, RAYAGADA, SAMBALPUR, SONEPUR, SUNDARGARH
+Use the same spelling of a place everywhere it appears (including inside employer_address)."""
 
 AADHAAR_PROMPT = """This is an Indian Aadhaar card (front and/or back side, possibly a PDF of both).
 Return the values below. Use "" for anything not printed or unreadable; never guess.
@@ -147,21 +160,23 @@ def _api_key():
     return key
 
 
-def _models():
-    """Models to try in order; later ones are fallbacks for when Google reports one as busy."""
+def _models(kind=None):
+    """Models to try in order; later ones are fallbacks for when Google reports one as busy.
+    config.json "gemini_models_by_kind" can set a different order for one document kind."""
     try:
         config = json.loads((BASE_DIR / "config.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         config = {}
-    models = config.get("gemini_models") or [config.get("gemini_model") or DEFAULT_MODEL]
+    models = ((config.get("gemini_models_by_kind") or {}).get(kind) or config.get("gemini_models")
+              or [config.get("gemini_model") or DEFAULT_MODEL])
     return list(dict.fromkeys(models))
 
 
-def _request(url, key, body=None):
+def _request(url, key, body=None, timeout=CALL_TIMEOUT_S):
     request = urllib.request.Request(
         url, data=json.dumps(body).encode() if body is not None else None,
         headers={"Content-Type": "application/json", "x-goog-api-key": key})
-    with urllib.request.urlopen(request, timeout=120) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read())
 
 
@@ -188,7 +203,7 @@ def _call(model, key, body):
             raise _Skip(f"{model}: not available") from None
         raise RuntimeError(f"Gemini error {exc.code}: {detail}") from None
     except (urllib.error.URLError, TimeoutError) as exc:
-        raise _Busy(f"{model}: no response ({getattr(exc, 'reason', exc)})") from None
+        raise _Slow(f"{model}: no response within {CALL_TIMEOUT_S}s ({getattr(exc, 'reason', exc)})") from None
     try:
         return json.loads(reply["candidates"][0]["content"]["parts"][0]["text"])
     except (KeyError, IndexError, ValueError):
@@ -201,6 +216,10 @@ class _Busy(Exception):
 
 class _Skip(Exception):
     pass
+
+
+class _Slow(Exception):
+    """No answer in time: move to the next model instead of waiting for this one again."""
 
 
 def extract(path, kind="job_card"):
@@ -224,11 +243,11 @@ def extract(path, kind="job_card"):
         },
     }
     problems = []
-    for model in _models():
+    for model in _models(kind):
         for attempt in range(RETRIES_PER_MODEL + 1):
             try:
                 return _call(model, key, body)
-            except _Skip as exc:
+            except (_Skip, _Slow) as exc:
                 problems.append(str(exc))
                 break
             except _Busy as exc:
