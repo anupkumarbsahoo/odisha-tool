@@ -180,6 +180,7 @@ class EmpDocsScreen(ttk.Frame):
                 self.add_row(frame, row, f"{tab_key}.{key}", label, choices, saved.get(tab_key, {}).get(key, ""))
 
         self.vars["caste"].trace_add("write", lambda *a: self.update_sub_castes())
+        self.vars["caste"].trace_add("write", lambda *a: self.update_exchanges())
         self.update_sub_castes()
 
         tip = ttk.Label(self, text="Tip: click a file name to open it. Fields read from documents can be corrected "
@@ -211,6 +212,9 @@ class EmpDocsScreen(ttk.Frame):
         state = self.cfg.get("state_exchange", {})
         if values and self.vars["qualification"].get().strip().upper() in state.get("levels", []):
             values = [v for v in values if v.lower().startswith("district")] or values
+            values = values + [state["name"]]
+        # SC / ST job seekers can also register at the State Employment Exchange
+        elif values and self.vars["caste"].get().strip().upper() in state.get("castes", []):
             values = values + [state["name"]]
         self.exchange_box.config(values=values)
         if self.vars["exchange"].get() not in values:

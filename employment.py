@@ -167,6 +167,7 @@ class EmploymentRun(RegistrationRun):
         self.pages = self.cfg["pages"]
         self.marks = 0
         self.qual = {}
+        self.reviewed = set()   # "confirm": "always" fields the user has already checked in this run
 
     # --- locating -----------------------------------------------------------
     def mark(self, label, kind, after=None, nth=1):
@@ -250,6 +251,9 @@ class EmploymentRun(RegistrationRun):
         wanted = self.value(step)
         current = selected_text(self.page, loc)
         if current and (not step.get("replace") or not wanted or _compact(current) == _compact(wanted)):
+            if step.get("confirm") == "always" and label not in self.reviewed:
+                self.summary.append(f"{label}: {current}")
+                self.confirm_choice(label, wanted, loc)
             return
         if not wanted:
             if step.get("optional"):
@@ -300,6 +304,7 @@ class EmploymentRun(RegistrationRun):
         if current:
             self.summary.pop()   # the line for the tool's own pick
         self.summary.append(f"{label}: {chosen}")
+        self.reviewed.add(label)
         self.ui.status(f"{label}: {chosen} (checked by you)")
 
     def date(self, step):

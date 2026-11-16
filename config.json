@@ -223,8 +223,8 @@
     "castes": ["GENERAL", "OBC", "OBC AND SEBC", "SCHEDULE CASTE", "SCHEDULE TRIBE", "SEBC"],
     "genders": ["MALE", "FEMALE", "TRANSGENDER"],
     "marital_statuses": ["UNMARRIED", "MARRIED", "DIVORCEE", "SEPARATED/DESERTED-WOMAN", "WIDOW", "WIDOWER", "ANY"],
-    "_state_exchange_readme": "Checked on the portal: for these qualification levels the Exchange list is the district's District Employment Exchange plus this state exchange (no sub-offices).",
-    "state_exchange": {"name": "State Employment Exchange, Bhubaneswar", "levels": ["GRADUATE(TECH.)", "POST GRADUATE", "DOCTORATE"]},
+    "_state_exchange_readme": "Checked on the portal: for these qualification levels the Exchange list is the district's District Employment Exchange plus this state exchange (no sub-offices). For the castes listed (SC / ST) the state exchange is added to the district's full list (not yet checked on the portal).",
+    "state_exchange": {"name": "State Employment Exchange, Bhubaneswar", "levels": ["GRADUATE(TECH.)", "POST GRADUATE", "DOCTORATE"], "castes": ["SCHEDULE CASTE", "SCHEDULE TRIBE"]},
     "exchanges": {
       "ANGUL": ["Special Employment Exchange, Talcher", "District Employment Exchange, Angul"],
       "BALANGIR": ["District Employment Exchange, Balangir"],
@@ -262,9 +262,9 @@
     "pages": {
       "exchange": [
         {"select": "qualification", "label": "Qualification Level", "sel": "select[name='qualificationlevel']", "replace": true},
-        {"select": "district", "label": "District", "sel": "select[name='district']", "replace": true, "fuzzy": true},
-        {"select": "exchange", "label": "Exchange", "sel": "select[name='exchange']", "replace": true, "fuzzy": true},
         {"select": "caste", "label": "Caste", "sel": "select[name='caste']", "replace": true},
+        {"select": "district", "label": "District", "sel": "select[name='district']", "replace": true, "fuzzy": true},
+        {"select": "exchange", "label": "Exchange", "sel": "select[name='exchange']", "replace": true, "fuzzy": true, "confirm": "always"},
         {"check": true, "label": "Disability", "sel": "#disability1"}
       ],
       "personal": [
